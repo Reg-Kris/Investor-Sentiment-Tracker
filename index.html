@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/webstorm-icon-logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Market Sentiment Tracker</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="background-gradient"></div>
+
+    <header class="header">
+      <h1 class="main-title">Market Sentiment Tracker</h1>
+      <p class="subtitle">
+        Real-time financial sentiment and market indicators
+      </p>
+    </header>
+
+    <main class="dashboard">
+      <div class="cards-container">
+        <div class="sentiment-card" id="fear-greed-card">
+          <div class="card-header">
+            <h3>Fear & Greed Index</h3>
+            <span class="data-source">CNN</span>
+          </div>
+          <div class="card-content">
+            <div class="gauge-container">
+              <canvas id="fear-greed-gauge" width="200" height="200"></canvas>
+            </div>
+            <div class="sentiment-info">
+              <div class="sentiment-value" id="fear-greed-value">--</div>
+              <div class="sentiment-label" id="fear-greed-label">
+                Loading...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sentiment-card" id="put-call-card">
+          <div class="card-header">
+            <h3>SPY Put/Call Ratio</h3>
+            <span class="data-source">Yahoo Finance</span>
+          </div>
+          <div class="card-content">
+            <canvas id="put-call-chart" width="300" height="200"></canvas>
+            <div class="metric-info">
+              <span class="metric-value" id="put-call-value">--</span>
+              <span class="metric-change" id="put-call-change">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sentiment-card" id="vix-card">
+          <div class="card-header">
+            <h3>VIX Volatility</h3>
+            <span class="data-source">FRED</span>
+          </div>
+          <div class="card-content">
+            <canvas id="vix-chart" width="300" height="200"></canvas>
+            <div class="metric-info">
+              <span class="metric-value" id="vix-value">--</span>
+              <span class="metric-change" id="vix-change">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sentiment-card" id="spy-card">
+          <div class="card-header">
+            <h3>S&P 500 (SPY)</h3>
+            <span class="data-source">Alpha Vantage</span>
+          </div>
+          <div class="card-content">
+            <canvas id="spy-chart" width="300" height="200"></canvas>
+            <div class="metric-info">
+              <span class="metric-value" id="spy-value">--</span>
+              <span class="metric-change" id="spy-change">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sentiment-card" id="policy-card">
+          <div class="card-header">
+            <h3>Economic Policy Uncertainty</h3>
+            <span class="data-source">FRED</span>
+          </div>
+          <div class="card-content">
+            <canvas id="policy-chart" width="300" height="200"></canvas>
+            <div class="metric-info">
+              <span class="metric-value" id="policy-value">--</span>
+              <span class="metric-change" id="policy-change">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sentiment-card" id="volume-card">
+          <div class="card-header">
+            <h3>Market Volume</h3>
+            <span class="data-source">Alpha Vantage</span>
+          </div>
+          <div class="card-content">
+            <canvas id="volume-chart" width="300" height="200"></canvas>
+            <div class="metric-info">
+              <span class="metric-value" id="volume-value">--</span>
+              <span class="metric-change" id="volume-change">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sentiment-card" id="qqq-card">
+          <div class="card-header">
+            <h3>Nasdaq 100 (QQQ)</h3>
+            <span class="data-source">Alpha Vantage</span>
+          </div>
+          <div class="card-content">
+            <canvas id="qqq-chart" width="300" height="200"></canvas>
+            <div class="metric-info">
+              <span class="metric-value" id="qqq-value">--</span>
+              <span class="metric-change" id="qqq-change">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sentiment-card" id="qqq-put-call-card">
+          <div class="card-header">
+            <h3>QQQ Put/Call Ratio</h3>
+            <span class="data-source">Yahoo Finance</span>
+          </div>
+          <div class="card-content">
+            <canvas id="qqq-put-call-chart" width="300" height="200"></canvas>
+            <div class="metric-info">
+              <span class="metric-value" id="qqq-put-call-value">--</span>
+              <span class="metric-change" id="qqq-put-call-change">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sentiment-card" id="iwm-card">
+          <div class="card-header">
+            <h3>Russell 2000 (IWM)</h3>
+            <span class="data-source">Alpha Vantage</span>
+          </div>
+          <div class="card-content">
+            <canvas id="iwm-chart" width="300" height="200"></canvas>
+            <div class="metric-info">
+              <span class="metric-value" id="iwm-value">--</span>
+              <span class="metric-change" id="iwm-change">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sentiment-card" id="iwm-put-call-card">
+          <div class="card-header">
+            <h3>IWM Put/Call Ratio</h3>
+            <span class="data-source">Yahoo Finance</span>
+          </div>
+          <div class="card-content">
+            <canvas id="iwm-put-call-chart" width="300" height="200"></canvas>
+            <div class="metric-info">
+              <span class="metric-value" id="iwm-put-call-value">--</span>
+              <span class="metric-change" id="iwm-put-call-change">--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>Data updated every 5 minutes • <span id="last-update">--</span></p>
+      <div class="donation-section">
+        <p>
+          Find this useful?
+          <a
+            href="https://revolut.me/kristiuo4b"
+            target="_blank"
+            rel="noopener"
+            class="donation-link"
+            >☕ Buy me a coffee</a
+          >
+        </p>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

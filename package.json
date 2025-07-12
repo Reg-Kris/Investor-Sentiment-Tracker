@@ -1,0 +1,19 @@
+{
+  "name": "sentiment-tracker",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "prettier": "^3.3.1",
+    "vite": "^5.2.0"
+  }
+}
