@@ -1,71 +1,83 @@
 {
   "overall": {
-    "score": 68,
-    "sentiment": "GREED",
-    "message": "Investors are greedy",
-    "confidence": 85,
+    "score": 51,
+    "sentiment": "NEUTRAL",
+    "message": "Markets are balanced",
+    "confidence": 100,
     "components": {
-      "fearGreed": { "score": 72, "weight": 0.35 },
-      "market": { "score": 65, "weight": 0.25 },
-      "volatility": { "score": 58, "weight": 0.20 },
-      "options": { "score": 75, "weight": 0.20 }
+      "fearGreed": {
+        "score": 42,
+        "weight": 0.35
+      },
+      "market": {
+        "score": 47,
+        "weight": 0.25
+      },
+      "volatility": {
+        "score": 52,
+        "weight": 0.2
+      },
+      "options": {
+        "score": 70,
+        "weight": 0.2
+      }
     }
   },
   "timeframes": {
     "1d": {
-      "score": 68,
-      "sentiment": "GREED", 
-      "message": "Investors are greedy",
-      "trend": "stable"
+      "score": 47,
+      "sentiment": "NEUTRAL",
+      "message": "Markets are balanced",
+      "trend": "neutral"
     },
     "5d": {
-      "score": 62,
-      "sentiment": "MILD GREED",
-      "message": "Markets are slightly bullish", 
-      "trend": "improving"
+      "score": 32,
+      "sentiment": "FEAR",
+      "message": "Investors are fearful",
+      "trend": "stable"
     },
     "1m": {
-      "score": 55,
-      "sentiment": "MILD GREED",
-      "message": "Markets are slightly bullish",
-      "trend": "improving"
+      "score": 36,
+      "sentiment": "MILD FEAR",
+      "message": "Markets are slightly bearish",
+      "trend": "deteriorating"
     }
   },
   "indicators": {
     "fearGreed": {
-      "value": 72,
-      "label": "Greed",
-      "message": "Markets showing greed",
-      "color": "#f59e0b"
+      "value": 42,
+      "label": "Neutral",
+      "message": "Fear dominates markets",
+      "color": "#f97316"
     },
     "spy": {
-      "price": 452.34,
-      "change": 1.2,
-      "message": "S&P 500 trending higher",
-      "color": "#10b981"
+      "price": 441.06,
+      "change": -0.52,
+      "message": "S&P 500 under pressure",
+      "color": "#ef4444"
     },
     "qqq": {
-      "price": 398.76,
-      "change": 0.8,
-      "message": "Nasdaq 100 trending higher", 
-      "color": "#10b981"
+      "price": 449.98,
+      "change": -0.41,
+      "message": "Nasdaq 100 trading flat",
+      "color": "#ef4444"
     },
     "iwm": {
-      "price": 234.12,
-      "change": -0.3,
+      "price": 444.85,
+      "change": -0.08,
       "message": "Russell 2000 trading flat",
       "color": "#ef4444"
     },
     "vix": {
-      "value": 18.2,
+      "value": 22,
       "message": "Volatility is moderate",
       "color": "#f59e0b"
     },
     "options": {
-      "spy": "SPY traders bullish",
-      "qqq": "QQQ traders bullish", 
+      "spy": "SPY traders neutral",
+      "qqq": "QQQ traders neutral",
       "iwm": "IWM traders neutral"
     }
   },
-  "lastAnalyzed": "2025-01-12T15:30:00.000Z"
+  "lastAnalyzed": "2025-07-12T14:03:46.590Z"
 }
