@@ -576,6 +576,7 @@ class SentimentTracker {
     }
 
     this.updateFearGreedGauge();
+    this.updateBackgroundGradient();
     this.updateLastUpdateTime();
   }
 
@@ -592,6 +593,36 @@ class SentimentTracker {
         .backgroundColor as string[];
       backgrounds[0] = color;
       this.charts.fearGreed.update();
+    }
+  }
+
+  private updateBackgroundGradient() {
+    const backgroundElement = document.querySelector('.background-gradient');
+    if (!backgroundElement) return;
+
+    const fearGreedValue = this.data.fearGreedIndex;
+    const spyChange = this.data.spyChange;
+    const qqqChange = this.data.qqqChange;
+    const iwmChange = this.data.iwmChange;
+    const vix = this.data.vix;
+
+    const averageChange = (spyChange + qqqChange + iwmChange) / 3;
+    
+    let sentimentScore = 0;
+    sentimentScore += fearGreedValue;
+    sentimentScore += averageChange > 0 ? 20 : -20;
+    sentimentScore += vix > 25 ? -15 : vix < 15 ? 15 : 0;
+
+    backgroundElement.className = 'background-gradient';
+
+    if (sentimentScore <= 25) {
+      backgroundElement.classList.add('extreme-fear');
+    } else if (sentimentScore <= 45) {
+      backgroundElement.classList.add('fear');
+    } else if (sentimentScore >= 75) {
+      backgroundElement.classList.add('extreme-greed');
+    } else if (sentimentScore >= 55) {
+      backgroundElement.classList.add('greed');
     }
   }
 
