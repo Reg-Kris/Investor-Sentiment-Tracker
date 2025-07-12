@@ -1,0 +1,71 @@
+{
+  "overall": {
+    "score": 68,
+    "sentiment": "GREED",
+    "message": "Investors are greedy",
+    "confidence": 85,
+    "components": {
+      "fearGreed": { "score": 72, "weight": 0.35 },
+      "market": { "score": 65, "weight": 0.25 },
+      "volatility": { "score": 58, "weight": 0.20 },
+      "options": { "score": 75, "weight": 0.20 }
+    }
+  },
+  "timeframes": {
+    "1d": {
+      "score": 68,
+      "sentiment": "GREED", 
+      "message": "Investors are greedy",
+      "trend": "stable"
+    },
+    "5d": {
+      "score": 62,
+      "sentiment": "MILD GREED",
+      "message": "Markets are slightly bullish", 
+      "trend": "improving"
+    },
+    "1m": {
+      "score": 55,
+      "sentiment": "MILD GREED",
+      "message": "Markets are slightly bullish",
+      "trend": "improving"
+    }
+  },
+  "indicators": {
+    "fearGreed": {
+      "value": 72,
+      "label": "Greed",
+      "message": "Markets showing greed",
+      "color": "#f59e0b"
+    },
+    "spy": {
+      "price": 452.34,
+      "change": 1.2,
+      "message": "S&P 500 trending higher",
+      "color": "#10b981"
+    },
+    "qqq": {
+      "price": 398.76,
+      "change": 0.8,
+      "message": "Nasdaq 100 trending higher", 
+      "color": "#10b981"
+    },
+    "iwm": {
+      "price": 234.12,
+      "change": -0.3,
+      "message": "Russell 2000 trading flat",
+      "color": "#ef4444"
+    },
+    "vix": {
+      "value": 18.2,
+      "message": "Volatility is moderate",
+      "color": "#f59e0b"
+    },
+    "options": {
+      "spy": "SPY traders bullish",
+      "qqq": "QQQ traders bullish", 
+      "iwm": "IWM traders neutral"
+    }
+  },
+  "lastAnalyzed": "2025-01-12T15:30:00.000Z"
+}

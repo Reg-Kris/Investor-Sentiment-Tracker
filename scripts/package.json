@@ -1,0 +1,17 @@
+{
+  "name": "sentiment-data-processor",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "fetch-data": "node src/data-fetcher.js",
+    "analyze-sentiment": "node src/sentiment-analyzer.js",
+    "dev": "node --watch src/data-fetcher.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "date-fns": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24"
+  }
+}

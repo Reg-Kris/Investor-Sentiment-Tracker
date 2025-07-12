@@ -1,0 +1,55 @@
+name: Market Sentiment Data Pipeline
+
+on:
+  schedule:
+    # Run daily at 6:00 AM EST (11:00 UTC)
+    - cron: '0 11 * * *'
+  workflow_dispatch: # Allow manual trigger
+  push:
+    branches: [main]
+    paths: ['scripts/**']
+
+jobs:
+  fetch-and-process:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'scripts/package.json'
+          
+      - name: Install dependencies
+        run: |
+          cd scripts
+          npm ci
+          
+      - name: Fetch market data
+        env:
+          ALPHA_VANTAGE_KEY: ${{ secrets.ALPHA_VANTAGE_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: |
+          cd scripts
+          npm run fetch-data
+          
+      - name: Process and analyze sentiment
+        run: |
+          cd scripts
+          npm run analyze-sentiment
+          
+      - name: Commit updated data
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add public/data/
+          if git diff --staged --quiet; then
+            echo "No data changes detected"
+          else
+            git commit -m "🤖 Update market sentiment data - $(date +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi

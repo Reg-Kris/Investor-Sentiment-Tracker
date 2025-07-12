@@ -1,652 +1,261 @@
-import { Chart, registerables } from 'chart.js';
-import { APIService } from './api';
+import { DataService } from './services/data-service';
+import { SentimentCluster } from './components/sentiment-cluster';
+import { MarketCard, VixCard, OptionsCard } from './components/indicator-card';
+import type { SentimentData, TimeFrame } from './types/sentiment';
 
-Chart.register(...registerables);
-
-interface SentimentData {
-  fearGreedIndex: number;
-  fearGreedLabel: string;
-  putCallRatio: number;
-  vix: number;
-  spyPrice: number;
-  spyChange: number;
-  policyUncertainty: number;
-  marketVolume: number;
-  qqqPrice: number;
-  qqqChange: number;
-  qqqPutCallRatio: number;
-  iwmPrice: number;
-  iwmChange: number;
-  iwmPutCallRatio: number;
-}
-
-class SentimentTracker {
-  private data: SentimentData = {
-    fearGreedIndex: 0,
-    fearGreedLabel: 'Loading...',
-    putCallRatio: 0,
-    vix: 0,
-    spyPrice: 0,
-    spyChange: 0,
-    policyUncertainty: 0,
-    marketVolume: 0,
-    qqqPrice: 0,
-    qqqChange: 0,
-    qqqPutCallRatio: 0,
-    iwmPrice: 0,
-    iwmChange: 0,
-    iwmPutCallRatio: 0,
-  };
-
-  private charts: { [key: string]: Chart } = {};
+class ModernSentimentTracker {
+  private data: SentimentData | null = null;
+  private currentTimeframe: TimeFrame = '1d';
+  private components: {
+    cluster?: SentimentCluster;
+    cards: { [key: string]: any };
+  } = { cards: {} };
 
   constructor() {
-    this.initializeCharts();
-    this.loadData().catch(console.error);
-    this.setupRefreshInterval();
+    this.initializeApp();
   }
 
-  private initializeCharts() {
-    this.createFearGreedGauge();
-    this.createPutCallChart();
-    this.createVixChart();
-    this.createSpyChart();
-    this.createPolicyChart();
-    this.createVolumeChart();
-    this.createQqqChart();
-    this.createQqqPutCallChart();
-    this.createIwmChart();
-    this.createIwmPutCallChart();
-  }
-
-  private createFearGreedGauge() {
-    const ctx = document.getElementById(
-      'fear-greed-gauge',
-    ) as HTMLCanvasElement;
-    if (!ctx) return;
-
-    this.charts.fearGreed = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        datasets: [
-          {
-            data: [0, 100],
-            backgroundColor: [
-              'rgba(239, 68, 68, 0.8)',
-              'rgba(255, 255, 255, 0.1)',
-            ],
-            borderWidth: 0,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: false },
-        },
-        rotation: -90,
-        circumference: 180,
-        cutout: '75%',
-      },
-    });
-  }
-
-  private createPutCallChart() {
-    const ctx = document.getElementById('put-call-chart') as HTMLCanvasElement;
-    if (!ctx) return;
-
-    this.charts.putCall = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
-        datasets: [
-          {
-            label: 'Put/Call Ratio',
-            data: this.generateMockData(30, 0.5, 2.0),
-            borderColor: 'rgb(59, 130, 246)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            fill: true,
-            tension: 0.4,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-        },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
-          },
-        },
-      },
-    });
-  }
-
-  private createVixChart() {
-    const ctx = document.getElementById('vix-chart') as HTMLCanvasElement;
-    if (!ctx) return;
-
-    this.charts.vix = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
-        datasets: [
-          {
-            label: 'VIX',
-            data: this.generateMockData(30, 15, 40),
-            borderColor: 'rgb(139, 92, 246)',
-            backgroundColor: 'rgba(139, 92, 246, 0.1)',
-            fill: true,
-            tension: 0.4,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-        },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
-          },
-        },
-      },
-    });
-  }
-
-  private createSpyChart() {
-    const ctx = document.getElementById('spy-chart') as HTMLCanvasElement;
-    if (!ctx) return;
-
-    this.charts.spy = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
-        datasets: [
-          {
-            label: 'SPY Price',
-            data: this.generateMockData(30, 400, 500),
-            borderColor: 'rgb(6, 214, 160)',
-            backgroundColor: 'rgba(6, 214, 160, 0.1)',
-            fill: true,
-            tension: 0.4,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-        },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
-          },
-        },
-      },
-    });
-  }
-
-  private createPolicyChart() {
-    const ctx = document.getElementById('policy-chart') as HTMLCanvasElement;
-    if (!ctx) return;
-
-    this.charts.policy = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-        datasets: [
-          {
-            label: 'Policy Uncertainty',
-            data: [120, 150, 180, 160],
-            backgroundColor: 'rgba(245, 158, 11, 0.8)',
-            borderColor: 'rgb(245, 158, 11)',
-            borderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-        },
-        scales: {
-          x: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
-          },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
-          },
-        },
-      },
-    });
-  }
-
-  private createVolumeChart() {
-    const ctx = document.getElementById('volume-chart') as HTMLCanvasElement;
-    if (!ctx) return;
-
-    this.charts.volume = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: Array.from({ length: 7 }, (_, i) => `Day ${i + 1}`),
-        datasets: [
-          {
-            label: 'Volume',
-            data: this.generateMockData(7, 50, 150),
-            backgroundColor: 'rgba(59, 130, 246, 0.8)',
-            borderColor: 'rgb(59, 130, 246)',
-            borderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-        },
-        scales: {
-          x: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
-          },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
-          },
-        },
-      },
-    });
-  }
-
-  private createQqqChart() {
-    const ctx = document.getElementById('qqq-chart') as HTMLCanvasElement;
-    if (!ctx) return;
-
-    this.charts.qqq = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
-        datasets: [
-          {
-            label: 'QQQ Price',
-            data: this.generateMockData(30, 380, 420),
-            borderColor: 'rgb(168, 85, 247)',
-            backgroundColor: 'rgba(168, 85, 247, 0.1)',
-            fill: true,
-            tension: 0.4,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-        },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
-          },
-        },
-      },
-    });
-  }
-
-  private createQqqPutCallChart() {
-    const ctx = document.getElementById(
-      'qqq-put-call-chart',
-    ) as HTMLCanvasElement;
-    if (!ctx) return;
-
-    this.charts.qqqPutCall = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
-        datasets: [
-          {
-            label: 'QQQ Put/Call Ratio',
-            data: this.generateMockData(30, 0.4, 1.8),
-            borderColor: 'rgb(249, 115, 22)',
-            backgroundColor: 'rgba(249, 115, 22, 0.1)',
-            fill: true,
-            tension: 0.4,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-        },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
-          },
-        },
-      },
-    });
-  }
-
-  private createIwmChart() {
-    const ctx = document.getElementById('iwm-chart') as HTMLCanvasElement;
-    if (!ctx) return;
-
-    this.charts.iwm = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
-        datasets: [
-          {
-            label: 'IWM Price',
-            data: this.generateMockData(30, 220, 250),
-            borderColor: 'rgb(34, 197, 94)',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            fill: true,
-            tension: 0.4,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-        },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
-          },
-        },
-      },
-    });
-  }
-
-  private createIwmPutCallChart() {
-    const ctx = document.getElementById(
-      'iwm-put-call-chart',
-    ) as HTMLCanvasElement;
-    if (!ctx) return;
-
-    this.charts.iwmPutCall = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: Array.from({ length: 30 }, (_, i) => `Day ${i + 1}`),
-        datasets: [
-          {
-            label: 'IWM Put/Call Ratio',
-            data: this.generateMockData(30, 0.6, 2.2),
-            borderColor: 'rgb(236, 72, 153)',
-            backgroundColor: 'rgba(236, 72, 153, 0.1)',
-            fill: true,
-            tension: 0.4,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-        },
-        scales: {
-          x: { display: false },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-            ticks: { color: 'rgba(255, 255, 255, 0.7)' },
-          },
-        },
-      },
-    });
-  }
-
-  private generateMockData(length: number, min: number, max: number): number[] {
-    return Array.from({ length }, () => Math.random() * (max - min) + min);
-  }
-
-  private async loadData() {
+  private async initializeApp(): Promise<void> {
     try {
-      const [
-        fearGreedResult,
-        spyResult,
-        vixResult,
-        policyResult,
-        putCallResult,
-        volumeResult,
-        qqqResult,
-        qqqPutCallResult,
-        iwmResult,
-        iwmPutCallResult,
-      ] = await Promise.allSettled([
-        APIService.getFearGreedIndex(),
-        APIService.getSpyData(),
-        APIService.getVixData(),
-        APIService.getPolicyUncertaintyData(),
-        APIService.calculatePutCallRatio(),
-        APIService.getMarketVolumeData(),
-        APIService.getQqqData(),
-        APIService.calculateQqqPutCallRatio(),
-        APIService.getIwmData(),
-        APIService.calculateIwmPutCallRatio(),
-      ]);
-
-      if (
-        fearGreedResult.status === 'fulfilled' &&
-        fearGreedResult.value.success
-      ) {
-        this.data.fearGreedIndex = fearGreedResult.value.data.value;
-        this.data.fearGreedLabel = this.getFearGreedLabel(
-          fearGreedResult.value.data.value,
-        );
-      }
-
-      if (spyResult.status === 'fulfilled' && spyResult.value.success) {
-        this.data.spyPrice = spyResult.value.data.price;
-        this.data.spyChange = spyResult.value.data.changePercent;
-      }
-
-      if (vixResult.status === 'fulfilled' && vixResult.value.success) {
-        this.data.vix = vixResult.value.data.value;
-      }
-
-      if (policyResult.status === 'fulfilled' && policyResult.value.success) {
-        this.data.policyUncertainty = policyResult.value.data.value;
-      }
-
-      if (putCallResult.status === 'fulfilled' && putCallResult.value.success) {
-        this.data.putCallRatio = putCallResult.value.data.ratio;
-      }
-
-      if (volumeResult.status === 'fulfilled' && volumeResult.value.success) {
-        this.data.marketVolume = volumeResult.value.data.volume;
-      }
-
-      if (qqqResult.status === 'fulfilled' && qqqResult.value.success) {
-        this.data.qqqPrice = qqqResult.value.data.price;
-        this.data.qqqChange = qqqResult.value.data.changePercent;
-      }
-
-      if (
-        qqqPutCallResult.status === 'fulfilled' &&
-        qqqPutCallResult.value.success
-      ) {
-        this.data.qqqPutCallRatio = qqqPutCallResult.value.data.ratio;
-      }
-
-      if (iwmResult.status === 'fulfilled' && iwmResult.value.success) {
-        this.data.iwmPrice = iwmResult.value.data.price;
-        this.data.iwmChange = iwmResult.value.data.changePercent;
-      }
-
-      if (
-        iwmPutCallResult.status === 'fulfilled' &&
-        iwmPutCallResult.value.success
-      ) {
-        this.data.iwmPutCallRatio = iwmPutCallResult.value.data.ratio;
-      }
-
-      this.updateUI();
+      console.log('🚀 Initializing Modern Sentiment Tracker...');
+      
+      // Load data first
+      await this.loadData();
+      
+      // Initialize components
+      this.setupSentimentCluster();
+      this.setupIndicatorCards();
+      this.setupBackgroundGradient();
+      this.setupRefreshInterval();
+      
+      console.log('✅ App initialized successfully');
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ Failed to initialize app:', error);
+      this.showErrorState();
     }
   }
 
-  private getFearGreedLabel(value: number): string {
-    if (value <= 25) return 'Extreme Fear';
-    if (value <= 45) return 'Fear';
-    if (value <= 55) return 'Neutral';
-    if (value <= 75) return 'Greed';
-    return 'Extreme Greed';
-  }
-
-  private updateUI() {
-    this.updateElement('fear-greed-value', this.data.fearGreedIndex.toString());
-    this.updateElement('fear-greed-label', this.data.fearGreedLabel);
-
-    this.updateElement('put-call-value', this.data.putCallRatio.toFixed(2));
-    this.updateElement('spy-value', `$${this.data.spyPrice.toFixed(2)}`);
-    this.updateElement('vix-value', this.data.vix.toFixed(1));
-    this.updateElement('policy-value', this.data.policyUncertainty.toString());
-    this.updateElement('volume-value', `${this.data.marketVolume.toFixed(1)}M`);
-
-    this.updateElement('qqq-value', `$${this.data.qqqPrice.toFixed(2)}`);
-    this.updateElement(
-      'qqq-put-call-value',
-      this.data.qqqPutCallRatio.toFixed(2),
-    );
-    this.updateElement('iwm-value', `$${this.data.iwmPrice.toFixed(2)}`);
-    this.updateElement(
-      'iwm-put-call-value',
-      this.data.iwmPutCallRatio.toFixed(2),
-    );
-
-    const spyChangePrefix = this.data.spyChange >= 0 ? '+' : '';
-    this.updateElement(
-      'spy-change',
-      `${spyChangePrefix}${this.data.spyChange.toFixed(2)}%`,
-    );
-    const spyChangeElement = document.getElementById('spy-change');
-    if (spyChangeElement) {
-      spyChangeElement.className = `metric-change ${this.data.spyChange >= 0 ? 'positive' : 'negative'}`;
-    }
-
-    const qqqChangePrefix = this.data.qqqChange >= 0 ? '+' : '';
-    this.updateElement(
-      'qqq-change',
-      `${qqqChangePrefix}${this.data.qqqChange.toFixed(2)}%`,
-    );
-    const qqqChangeElement = document.getElementById('qqq-change');
-    if (qqqChangeElement) {
-      qqqChangeElement.className = `metric-change ${this.data.qqqChange >= 0 ? 'positive' : 'negative'}`;
-    }
-
-    const iwmChangePrefix = this.data.iwmChange >= 0 ? '+' : '';
-    this.updateElement(
-      'iwm-change',
-      `${iwmChangePrefix}${this.data.iwmChange.toFixed(2)}%`,
-    );
-    const iwmChangeElement = document.getElementById('iwm-change');
-    if (iwmChangeElement) {
-      iwmChangeElement.className = `metric-change ${this.data.iwmChange >= 0 ? 'positive' : 'negative'}`;
-    }
-
-    this.updateFearGreedGauge();
-    this.updateBackgroundGradient();
-    this.updateLastUpdateTime();
-  }
-
-  private updateFearGreedGauge() {
-    if (this.charts.fearGreed) {
-      const value = this.data.fearGreedIndex;
-      this.charts.fearGreed.data.datasets[0].data = [value, 100 - value];
-
-      let color = 'rgba(239, 68, 68, 0.8)';
-      if (value > 25 && value < 75) color = 'rgba(245, 158, 11, 0.8)';
-      if (value >= 75) color = 'rgba(16, 185, 129, 0.8)';
-
-      const backgrounds = this.charts.fearGreed.data.datasets[0]
-        .backgroundColor as string[];
-      backgrounds[0] = color;
-      this.charts.fearGreed.update();
+  private async loadData(): Promise<void> {
+    try {
+      this.data = await DataService.getSentimentData();
+      this.updateLastUpdateTime();
+    } catch (error) {
+      console.error('Failed to load sentiment data:', error);
+      throw error;
     }
   }
 
-  private updateBackgroundGradient() {
+  private setupSentimentCluster(): void {
+    const container = document.getElementById('sentiment-cluster-container');
+    if (!container || !this.data) return;
+
+    const timeframeData = this.data.timeframes[this.currentTimeframe];
+    
+    this.components.cluster = new SentimentCluster(container, {
+      score: timeframeData.score,
+      sentiment: timeframeData.sentiment,
+      message: timeframeData.message,
+      timeframe: this.currentTimeframe,
+      onTimeframeChange: (timeframe: TimeFrame) => {
+        this.handleTimeframeChange(timeframe);
+      }
+    });
+  }
+
+  private setupIndicatorCards(): void {
+    if (!this.data) return;
+
+    const indicators = this.data.indicators;
+    const timeframe = this.currentTimeframe.toUpperCase();
+
+    // S&P 500 Card
+    const spyContainer = document.getElementById('spy-card-container');
+    if (spyContainer) {
+      this.components.cards.spy = new MarketCard(
+        spyContainer,
+        'S&P 500',
+        indicators.spy.price,
+        indicators.spy.change,
+        indicators.spy.message,
+        indicators.spy.color,
+        timeframe
+      );
+    }
+
+    // Nasdaq 100 Card
+    const qqqContainer = document.getElementById('qqq-card-container');
+    if (qqqContainer) {
+      this.components.cards.qqq = new MarketCard(
+        qqqContainer,
+        'Nasdaq 100',
+        indicators.qqq.price,
+        indicators.qqq.change,
+        indicators.qqq.message,
+        indicators.qqq.color,
+        timeframe
+      );
+    }
+
+    // Russell 2000 Card
+    const iwmContainer = document.getElementById('iwm-card-container');
+    if (iwmContainer) {
+      this.components.cards.iwm = new MarketCard(
+        iwmContainer,
+        'Russell 2000',
+        indicators.iwm.price,
+        indicators.iwm.change,
+        indicators.iwm.message,
+        indicators.iwm.color,
+        timeframe
+      );
+    }
+
+    // VIX Card
+    const vixContainer = document.getElementById('vix-card-container');
+    if (vixContainer) {
+      this.components.cards.vix = new VixCard(
+        vixContainer,
+        indicators.vix.value,
+        indicators.vix.message,
+        indicators.vix.color,
+        timeframe
+      );
+    }
+
+    // Options Cards
+    const spyOptionsContainer = document.getElementById('spy-options-card-container');
+    if (spyOptionsContainer) {
+      this.components.cards.spyOptions = new OptionsCard(
+        spyOptionsContainer,
+        'SPY',
+        indicators.options.spy,
+        timeframe
+      );
+    }
+
+    const qqqOptionsContainer = document.getElementById('qqq-options-card-container');
+    if (qqqOptionsContainer) {
+      this.components.cards.qqqOptions = new OptionsCard(
+        qqqOptionsContainer,
+        'QQQ',
+        indicators.options.qqq,
+        timeframe
+      );
+    }
+
+    const iwmOptionsContainer = document.getElementById('iwm-options-card-container');
+    if (iwmOptionsContainer) {
+      this.components.cards.iwmOptions = new OptionsCard(
+        iwmOptionsContainer,
+        'IWM',
+        indicators.options.iwm,
+        timeframe
+      );
+    }
+  }
+
+  private handleTimeframeChange(timeframe: TimeFrame): void {
+    this.currentTimeframe = timeframe;
+    this.updateComponents();
+  }
+
+  private updateComponents(): void {
+    if (!this.data) return;
+
+    const timeframeData = this.data.timeframes[this.currentTimeframe];
+    const timeframeLabel = this.currentTimeframe.toUpperCase();
+
+    // Update sentiment cluster
+    if (this.components.cluster) {
+      this.components.cluster.updateProps({
+        score: timeframeData.score,
+        sentiment: timeframeData.sentiment,
+        message: timeframeData.message,
+        timeframe: this.currentTimeframe
+      });
+    }
+
+    // Update all cards with new timeframe
+    Object.values(this.components.cards).forEach(card => {
+      if (card && typeof card.updateProps === 'function') {
+        card.updateProps({ timeframe: timeframeLabel });
+      }
+    });
+
+    // Update background gradient
+    this.updateBackgroundGradient(timeframeData.score);
+  }
+
+  private setupBackgroundGradient(): void {
+    if (!this.data) return;
+    
+    const score = this.data.timeframes[this.currentTimeframe].score;
+    this.updateBackgroundGradient(score);
+  }
+
+  private updateBackgroundGradient(score: number): void {
     const backgroundElement = document.querySelector('.background-gradient');
     if (!backgroundElement) return;
 
-    const fearGreedValue = this.data.fearGreedIndex;
-    const spyChange = this.data.spyChange;
-    const qqqChange = this.data.qqqChange;
-    const iwmChange = this.data.iwmChange;
-    const vix = this.data.vix;
-
-    const averageChange = (spyChange + qqqChange + iwmChange) / 3;
-    
-    let sentimentScore = 0;
-    sentimentScore += fearGreedValue;
-    sentimentScore += averageChange > 0 ? 20 : -20;
-    sentimentScore += vix > 25 ? -15 : vix < 15 ? 15 : 0;
-
+    // Remove existing sentiment classes
     backgroundElement.className = 'background-gradient';
 
-    if (sentimentScore <= 25) {
-      backgroundElement.classList.add('extreme-fear');
-    } else if (sentimentScore <= 45) {
-      backgroundElement.classList.add('fear');
-    } else if (sentimentScore >= 75) {
+    // Add new sentiment class based on score
+    if (score >= 80) {
       backgroundElement.classList.add('extreme-greed');
-    } else if (sentimentScore >= 55) {
+    } else if (score >= 65) {
       backgroundElement.classList.add('greed');
+    } else if (score <= 20) {
+      backgroundElement.classList.add('extreme-fear');
+    } else if (score <= 35) {
+      backgroundElement.classList.add('fear');
     }
   }
 
-  private updateElement(id: string, value: string) {
-    const element = document.getElementById(id);
-    if (element) {
-      element.textContent = value;
+  private updateLastUpdateTime(): void {
+    if (!this.data) return;
+    
+    const lastUpdateElement = document.getElementById('last-update');
+    if (lastUpdateElement) {
+      const updateText = DataService.getLastUpdateText(this.data.lastAnalyzed);
+      lastUpdateElement.textContent = updateText;
     }
   }
 
-  private updateLastUpdateTime() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString();
-    this.updateElement('last-update', timeString);
+  private setupRefreshInterval(): void {
+    // Refresh data every 5 minutes
+    setInterval(async () => {
+      try {
+        await this.loadData();
+        this.updateComponents();
+        console.log('📊 Data refreshed successfully');
+      } catch (error) {
+        console.error('Failed to refresh data:', error);
+      }
+    }, 5 * 60 * 1000);
   }
 
-  private setupRefreshInterval() {
-    setInterval(
-      () => {
-        this.loadData().catch(console.error);
-      },
-      5 * 60 * 1000,
-    );
+  private showErrorState(): void {
+    const dashboard = document.querySelector('.dashboard');
+    if (dashboard) {
+      dashboard.innerHTML = `
+        <div class="error-state">
+          <h2>⚠️ Unable to Load Market Data</h2>
+          <p>Please check your connection and try refreshing the page.</p>
+          <button onclick="window.location.reload()" class="retry-button">
+            Retry
+          </button>
+        </div>
+      `;
+    }
   }
 }
 
-new SentimentTracker();
+// Initialize the app when DOM is loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    new ModernSentimentTracker();
+  });
+} else {
+  new ModernSentimentTracker();
+}
